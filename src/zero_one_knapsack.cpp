@@ -24,128 +24,47 @@ namespace recursive
     }};
 } // namespace recursive
 
+namespace recursive_with_memoization
+{
+    constexpr static auto solve_recursive{[](auto &dp, auto const &profits, auto const &weights, auto const capacity, auto const current_index) noexcept
+    {
+        if (capacity <= 0 || current_index >= profits.size())
+        {
+            return 0;
+        }
+        if (dp[current_index][capacity] != -1)
+        {
+            return dp[current_index][capacity];
+        }
+        auto profit1{0};
+        if (weights[current_index] <= capacity)
+        {
+            profit1 = profits[current_index] + solve_recursive(dp, profits, weights, capacity - weights[current_index], current_index + 1);
+        }
+        auto const profit2{solve_recursive(dp, profits, weights, capacity, current_index + 1)};
+        dp[current_index][capacity] = std::max(profit1, profit2);
+        return dp[current_index][capacity];
+    }};
+
+    constexpr static auto solve{[](auto const &profits, auto const &weights, auto const capacity) noexcept
+    {
+        std::vector<std::vector<int>> dp(profits.size(), std::vector<int>(capacity + 1, -1));
+        return solve_recursive(dp, profits, weights, capacity, 0);
+    }};
+} // namespace recursive_with_memoization
 
 int main(int argc, char const *argv[])
 {
     std::vector<int> profits{1, 6, 10, 16};
     std::vector<int> weights{1, 2, 3, 5};
-    std::cout << "recursive namespace" << std::endl;
+    std::cout << "recursive" << std::endl;
     std::cout << recursive::solve(profits, weights, 6) << std::endl;
     std::cout << recursive::solve(profits, weights, 7) << std::endl;
+    std::cout << "recursive with memoization" << std::endl;
+    std::cout << recursive_with_memoization::solve(profits, weights, 6) << std::endl;
+    std::cout << recursive_with_memoization::solve(profits, weights, 7) << std::endl;
     return 0;
 }
-
-
-
-// using namespace std;
-
-// #include <iostream>
-// #include <vector>
-
-// class Knapsack {
-// public:
-//   int solveKnapsack(const vector<int> &profits, const vector<int> &weights, int capacity) {
-//     return this->knapsackRecursive(profits, weights, capacity, 0);
-//   }
-
-// private:
-//   int knapsackRecursive(const vector<int> &profits, const vector<int> &weights, int capacity,
-//                         int current_index) {
-//     // base checks
-//     if (capacity <= 0 || current_index >= profits.size()) {
-//       return 0;
-//     }
-
-//     // recursive call after choosing the element at the current_index
-//     // if the weight of the element at current_index exceeds the capacity, we shouldn't process this
-//     int profit1 = 0;
-//     if (weights[current_index] <= capacity) {
-//       profit1 =
-//           profits[current_index] +
-//           knapsackRecursive(profits, weights, capacity - weights[current_index], current_index + 1);
-//     }
-
-//     // recursive call after excluding the element at the current_index
-//     int profit2 = knapsackRecursive(profits, weights, capacity, current_index + 1);
-
-//     return max(profit1, profit2);
-//   }
-// };
-
-// int main(int argc, char *argv[]) {
-//   Knapsack ks;
-//   vector<int> profits = {1, 6, 10, 16};
-//   vector<int> weights = {1, 2, 3, 5};
-//   int maxProfit = ks.solveKnapsack(profits, weights, 7);
-//   cout << "Total knapsack profit ---> " << maxProfit << endl;
-//   maxProfit = ks.solveKnapsack(profits, weights, 6);
-//   cout << "Total knapsack profit ---> " << maxProfit << endl;
-// }
-
-
-
-
-
-
-
-
-
-// using namespace std;
-
-// #include <iostream>
-// #include <vector>
-
-// class Knapsack {
-// public:
-//   int solveKnapsack(const vector<int> &profits, const vector<int> &weights, int capacity) {
-//     vector<vector<int>> dp(profits.size(), vector<int>(capacity + 1, -1));
-//     return this->knapsackRecursive(dp, profits, weights, capacity, 0);
-//   }
-
-// private:
-//   int knapsackRecursive(vector<vector<int>> &dp, const vector<int> &profits,
-//                         const vector<int> &weights, int capacity, int current_index) {
-//     // base checks
-//     if (capacity <= 0 || current_index >= profits.size()) {
-//       return 0;
-//     }
-
-//     // if we have already solved a similar problem, return the result from memory
-//     if (dp[current_index][capacity] != -1) {
-//       return dp[current_index][capacity];
-//     }
-
-//     // recursive call after choosing the element at the current_index
-//     // if the weight of the element at current_index exceeds the capacity, we shouldn't process this
-//     int profit1 = 0;
-//     if (weights[current_index] <= capacity) {
-//       profit1 = profits[current_index] + knapsackRecursive(dp, profits, weights,
-//                                                           capacity - weights[current_index],
-//                                                           current_index + 1);
-//     }
-
-//     // recursive call after excluding the element at the current_index
-//     int profit2 = knapsackRecursive(dp, profits, weights, capacity, current_index + 1);
-
-//     dp[current_index][capacity] = max(profit1, profit2);
-//     return dp[current_index][capacity];
-//   }
-// };
-
-// int main(int argc, char *argv[]) {
-//   Knapsack ks;
-//   vector<int> profits = {1, 6, 10, 16};
-//   vector<int> weights = {1, 2, 3, 5};
-//   int maxProfit = ks.solveKnapsack(profits, weights, 7);
-//   cout << "Total knapsack profit ---> " << maxProfit << endl;
-//   maxProfit = ks.solveKnapsack(profits, weights, 6);
-//   cout << "Total knapsack profit ---> " << maxProfit << endl;
-// }
-
-
-
-
-
 
 
 // using namespace std;
@@ -205,9 +124,6 @@ int main(int argc, char const *argv[])
 //   maxProfit = ks.solveKnapsack(profits, weights, 7);
 //   cout << "Total knapsack profit ---> " << maxProfit << endl;
 // }
-
-
-
 
 // // print elements
 
@@ -289,9 +205,6 @@ int main(int argc, char const *argv[])
 //   cout << "Total knapsack profit ---> " << maxProfit << endl;
 // }
 
-
-
-
 // using namespace std;
 
 // #include <iostream>
@@ -305,8 +218,6 @@ int main(int argc, char const *argv[])
 //     return -1;
 //   }
 // };
-
-
 
 // using namespace std;
 
@@ -415,7 +326,7 @@ int main(int argc, char const *argv[])
 //             }
 //         }
 //     }
-    
+
 //     return knapsack[number_of_items][knapsack_capacity];
 // }
 
