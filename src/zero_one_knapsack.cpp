@@ -24,7 +24,7 @@ namespace recursive
     }};
 } // namespace recursive
 
-namespace recursive_with_memoization
+namespace memoization
 {
     constexpr static auto solve_recursive{[](auto &dp, auto const &profits, auto const &weights, auto const capacity, auto const current_index) noexcept
     {
@@ -51,7 +51,7 @@ namespace recursive_with_memoization
         std::vector<std::vector<int>> dp(profits.size(), std::vector<int>(capacity + 1, -1));
         return solve_recursive(dp, profits, weights, capacity, 0);
     }};
-} // namespace recursive_with_memoization
+} // namespace memoization
 
 int main(int argc, char const *argv[])
 {
@@ -61,8 +61,8 @@ int main(int argc, char const *argv[])
     std::cout << recursive::solve(profits, weights, 6) << std::endl;
     std::cout << recursive::solve(profits, weights, 7) << std::endl;
     std::cout << "recursive with memoization" << std::endl;
-    std::cout << recursive_with_memoization::solve(profits, weights, 6) << std::endl;
-    std::cout << recursive_with_memoization::solve(profits, weights, 7) << std::endl;
+    std::cout << memoization::solve(profits, weights, 6) << std::endl;
+    std::cout << memoization::solve(profits, weights, 7) << std::endl;
     return 0;
 }
 
