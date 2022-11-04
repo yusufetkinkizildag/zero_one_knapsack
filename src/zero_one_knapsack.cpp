@@ -59,6 +59,7 @@ namespace memoization
 
 namespace dynamic
 {
+
     constexpr static auto solve{[](auto const &profits, auto const &weights, auto const capacity) noexcept
     {
         if (capacity <= 0 || profits.empty() || weights.size() != profits.size())
@@ -90,6 +91,7 @@ namespace dynamic
         }
         return dp[n - 1][capacity];
     }};
+
 } // namespace dynamic
 
 int main(int argc, char const *argv[])
