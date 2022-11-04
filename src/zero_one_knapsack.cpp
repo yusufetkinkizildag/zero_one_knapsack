@@ -60,7 +60,7 @@ namespace memoization
 namespace dynamic
 {
 
-    constexpr static auto print_selected_element{[](auto const &dp, auto const &weights, auto const &profits, auto const capacity) noexcept
+    constexpr static auto print_selected_elements{[](auto const &dp, auto const &weights, auto const &profits, auto const capacity) noexcept
     {
         auto const n{weights.size() - 1};
         auto cap{capacity};
@@ -110,7 +110,7 @@ namespace dynamic
                 dp[i][c] = std::max(profit1, profit2);
             }
         }
-        print_selected_element(dp, weights, profits, capacity);
+        print_selected_elements(dp, weights, profits, capacity);
         return dp[n - 1][capacity];
     }};
 
