@@ -11,17 +11,17 @@
 - [link5](https://youtu.be/yV1d-b_NeK8)
 
 ## Formula
-- N is the number of items
-- C is the knapsack capacity
-- P is the profits vector
-- W is the weights vector
-- X is the answer vector
+- `N` is the number of items
+- `C` is the knapsack capacity
+- `P` is the profits vector
+- `W` is the weights vector
+- `X` is the answer vector
 
 $$N \in \mathbb{N}$$
 
 $$C \in \mathbb{R}, \ C \geq 0$$
 
-$$\forall i \in \mathbb{N}, \ 0 \leq i < N$$
+$$\forall i, \ i \in \mathbb{N}, \ 0 \leq i < N$$
 
 $$P = \\{p_i \ | \ p_i \in \mathbb{R} \\}$$
 
