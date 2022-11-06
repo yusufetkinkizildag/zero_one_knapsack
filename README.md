@@ -36,6 +36,8 @@ $$max\sum_{i=0}^{N-1}x_ip_i$$
 
 $$\sum_{i=0}^{N-1}x_iw_i \leq C$$
 
+In dynamic programming
 
+$$dp[i][c] = max\\{dp[i-1][c], dp[i-1][c-w_i] + p_i\\}$$
 
 ## Compiler
