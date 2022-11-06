@@ -19,7 +19,7 @@
 
 $$N \in \mathbb{N}$$
 
-$$C \in \mathbb{R}, \ C \geq 0$$
+$$C \in \mathbb{N}, \ C \geq 0$$
 
 $$\forall i, \ i \in \mathbb{N}, \ 0 \leq i < N$$
 
