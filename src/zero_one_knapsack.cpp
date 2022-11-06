@@ -1,5 +1,40 @@
 #include <iostream>
 #include <vector>
+#include <iomanip>
+#include <utility>
+#include <numeric>
+
+namespace utility
+{
+    constexpr static auto print_dp{[](auto const &dp) noexcept
+    {
+        for (auto i{0}; i < dp.size(); ++i)
+        {
+            std::cout << '[';
+            for (auto j{0}; j < dp[i].size() - 1; ++j)
+            {
+                std::cout << std::setw(2) << std::setfill(' ') << dp[i][j] << ", ";
+            }
+            std::cout << std::setw(2) << std::setfill(' ') << dp[i].back();
+            std::cout << "]\n";
+        }
+    }};
+
+    constexpr static auto print_selected_items{[](auto const &selected_items, auto const &profits, auto const &weights) noexcept
+    {
+        std::cout << "Selected items (P, W)\n";
+        std::cout << '[';
+        for (auto i{0}; i < selected_items.size(); ++i)
+        {
+            if (selected_items[i] == 1)
+            {
+                std::cout << "(" << profits[i] << ", " << weights[i] << "), ";
+            }
+        }
+        std::cout << "]\n";
+    }};
+} // namespace utility
+
 
 namespace recursive
 {
@@ -60,25 +95,27 @@ namespace memoization
 namespace dynamic
 {
 
-    constexpr static auto print_selected_elements{[](auto const &dp, auto const &weights, auto const &profits, auto const capacity) noexcept
+    constexpr static auto get_selected_items{[](auto const &dp, auto const &profits, auto const &weights, auto const capacity) noexcept
     {
         auto const n{weights.size() - 1};
         auto cap{capacity};
         auto total_profit{dp[n][capacity]};
+        std::vector<size_t> selected_items(n + 1, 0);
         for(auto i{n}; i > 0; i--)
         {
-            if (total_profit != dp[i - 1][cap])
+            if (total_profit != dp[i-1][cap])
             {
-                std::cout << " " << weights[i];
+                
+                selected_items[i] = 1;
                 cap -= weights[i];
                 total_profit -= profits[i];
             }
-            if (total_profit != 0)
-            {
-                std::cout << " " << weights[0];
-            }
         }
-        std::cout << '\n';
+        if (total_profit > 0 && weights[0] <= cap)
+        {
+            selected_items[0] = 1;
+        }
+        return selected_items;
     }};
 
     constexpr static auto solve{[](auto const &profits, auto const &weights, auto const capacity) noexcept
@@ -89,7 +126,7 @@ namespace dynamic
         }
         auto const n{profits.size()};
         std::vector<std::vector<int>> dp(n, std::vector<int>(capacity + 1, 0));
-        for (int c = 0; c <= capacity; c++)
+        for (auto c{0}; c <= capacity; ++c)
         {
             if (weights[0] <= c)
             {
@@ -101,167 +138,127 @@ namespace dynamic
             for (auto c{1}; c <= capacity; ++c)
             {
                 auto profit1{0};
-                auto profit2{0};
                 if (weights[i] <= c)
                 {
                     profit1 = profits[i] + dp[i - 1][c - weights[i]];
                 }
-                profit2 = dp[i - 1][c];
-                dp[i][c] = std::max(profit1, profit2);
+                dp[i][c] = std::max(profit1, dp[i - 1][c]);
             }
         }
-        print_selected_elements(dp, weights, profits, capacity);
+        auto const selected_items{get_selected_items(dp, profits, weights, capacity)};
+        utility::print_selected_items(selected_items, profits, weights);
         return dp[n - 1][capacity];
     }};
 
 } // namespace dynamic
 
+
+namespace zero_one_knapsack
+{
+
+    class Problem
+    {
+        private:
+            std::vector<size_t> X;
+            std::vector<double> P;
+            std::vector<double> W;
+            std::vector<std::vector<double>> d;
+        public:
+            Problem(std::vector<double> const &P, std::vector<double> const &W) noexcept : P{P}, W{W} {}
+            Problem(std::vector<double> &&P, std::vector<double> const &W) noexcept : P{std::move(P)}, W{W} {}
+            Problem(std::vector<double> const &P, std::vector<double> &&W) noexcept : P{P}, W{std::move(W)} {}
+            Problem(std::vector<double> &&P, std::vector<double> &&W) noexcept : P{std::move(P)}, W{std::move(W)} {}
+
+            void solve(size_t const capacity) noexcept
+            {
+                auto const size{this->P.size()};
+                d.resize(size);
+                for (auto &row : d)
+                {
+                    row = std::vector<double>(capacity + 1, 0);
+                }
+                for (auto c{0}; c <= capacity; ++c)
+                {
+                    if (this->W[0] <= c)
+                    {
+                        this->d[0][c] = this->P[0];
+                    }
+                }
+                for (auto i{1}; i < size; ++i)
+                {
+                    for (auto c{1}; c <= capacity; ++c)
+                    {
+                        auto profit1{0.0};
+                        if (this->W[i] <= c)
+                        {
+                            profit1 = this->P[i] + this->d[i - 1][c - this->W[i]];
+                        }
+                        this->d[i][c] = std::max(profit1, this->d[i - 1][c]);
+                    }
+                }
+            }
+
+            std::vector<size_t> get_selected_items() noexcept
+            {
+                auto const n{this->W.size() - 1};
+                auto cap{this->d.front().size() - 1};
+                auto total_profit{this->d[n][cap]};
+                this->X.clear();
+                this->X.resize(n + 1, 0);
+                for(auto i{n}; i > 0; i--)
+                {
+                    if (total_profit != this->d[i-1][cap])
+                    {
+                        this->X[i] = 1;
+                        cap -= this->W[i];
+                        total_profit -= this->P[i];
+                    }
+                }
+                if (total_profit > 0 && this->W[0] <= cap)
+                {
+                    this->X[0] = 1;
+                }
+                return this->X;
+            }
+
+            double get_maximum_profit() noexcept
+            {
+                return std::transform_reduce(std::cbegin(this->X), std::cend(this->X), std::cbegin(this->P), 0.0);
+            }
+
+            double get_maximum_weight() noexcept
+            {
+                return std::transform_reduce(std::cbegin(this->X), std::cend(this->X), std::cbegin(this->W), 0.0);
+            }
+    };
+
+} // namespace zero_one_knapsack
+
+
 int main(int argc, char const *argv[])
 {
     std::vector<int> profits{1, 6, 10, 16};
     std::vector<int> weights{1, 2, 3, 5};
-    std::cout << "recursive" << std::endl;
-    std::cout << recursive::solve(profits, weights, 6) << std::endl;
-    std::cout << recursive::solve(profits, weights, 7) << std::endl;
-    std::cout << "recursive with memoization" << std::endl;
-    std::cout << memoization::solve(profits, weights, 6) << std::endl;
-    std::cout << memoization::solve(profits, weights, 7) << std::endl;
-    std::cout << "dynamic" << std::endl;
-    std::cout << dynamic::solve(profits, weights, 6) << std::endl;
-    std::cout << dynamic::solve(profits, weights, 7) << std::endl;
+    std::cout << "recursive" << '\n';
+    std::cout << recursive::solve(profits, weights, 6) << '\n';
+    std::cout << recursive::solve(profits, weights, 7) << '\n';
+    std::cout << "recursive with memoization" << '\n';
+    std::cout << memoization::solve(profits, weights, 6) << '\n';
+    std::cout << memoization::solve(profits, weights, 7) << '\n';
+    std::cout << "dynamic" << '\n';
+    std::cout << dynamic::solve(profits, weights, 6) << '\n';
+    std::cout << dynamic::solve(profits, weights, 7) << '\n';
+    std::cout << "Inside a class" << '\n';
+    zero_one_knapsack::Problem problem({1, 6, 10, 16}, {1, 2, 3, 5});
+    problem.solve(6);
+    auto const selected_items1{problem.get_selected_items()};
+    auto const p1{problem.get_maximum_profit()};
+    auto const w1{problem.get_maximum_weight()};
+    std::cout << p1 << ' ' << w1 << '\n';
+    problem.solve(7);
+    auto const selected_items2{problem.get_selected_items()};
+    auto const p2{problem.get_maximum_profit()};
+    auto const w2{problem.get_maximum_weight()};
+    std::cout << p2 << ' ' << w2 << '\n';
     return 0;
 }
-
-// using namespace std;
-
-// #include <iostream>
-// #include <vector>
-
-// // space optimization
-// class Knapsack {
-// public:
-//   int solveKnapsack(const vector<int> &profits, const vector<int> &weights, int capacity) {
-//     //TODO: Write - Your - Code
-//     return -1;
-//   }
-// };
-
-// using namespace std;
-
-// #include <iostream>
-// #include <vector>
-
-// class Knapsack {
-// public:
-//   int solveKnapsack(const vector<int> &profits, const vector<int> &weights, int capacity) {
-//     return this->knapsackRecursive(profits, weights, capacity, 0);
-//   }
-
-// private:
-//   int knapsackRecursive(const vector<int> &profits, const vector<int> &weights, int capacity,
-//                         int current_index) {
-//     // base checks
-//     if (capacity <= 0 || current_index >= profits.size()) {
-//       return 0;
-//     }
-
-//     // recursive call after choosing the element at the current_index
-//     // if the weight of the element at current_index exceeds the capacity, we shouldn't process this
-//     int profit1 = 0;
-//     if (weights[current_index] <= capacity) {
-//       profit1 =
-//           profits[current_index] +
-//           knapsackRecursive(profits, weights, capacity - weights[current_index], current_index + 1);
-//     }
-
-//     // recursive call after excluding the element at the current_index
-//     int profit2 = knapsackRecursive(profits, weights, capacity, current_index + 1);
-
-//     return max(profit1, profit2);
-//   }
-// };
-
-// int main(int argc, char *argv[]) {
-//   Knapsack ks;
-//   vector<int> profits = {1, 6, 10, 16};
-//   vector<int> weights = {1, 2, 3, 5};
-//   int maxProfit = ks.solveKnapsack(profits, weights, 7);
-//   cout << "Total knapsack profit ---> " << maxProfit << endl;
-//   maxProfit = ks.solveKnapsack(profits, weights, 6);
-//   cout << "Total knapsack profit ---> " << maxProfit << endl;
-// }
-// //****************************************************************** benim eski cozum
-// #include <iostream>
-
-// #define NUMBER_OF_ITEMS 4
-// #define KNAPSACK_CAPACITY 5
-
-// void print_array(int *array, int array_length)
-// {
-//     for (int i = 0; i < array_length; i++)
-//     {
-//         std::cout << array[i] << " ";
-//     }
-//     std::cout << std::endl;
-// }
-
-// int knapsack_recursive(int weights[], int values[], int number_of_items, int knapsack_capacity)
-// {
-//     if (knapsack_capacity == 0) //if the capacity of knapsack is 0 then can not include any item
-//     {
-//         return 0;
-//     }
-
-//     if (number_of_items == 0) //if no more items are left then return
-//     {
-//         return 0;
-//     }
-
-//     if (weights[number_of_items - 1] > knapsack_capacity) //if current item weighs more than the capacity of knapsack, it can not be included
-//     {
-//         return knapsack_recursive(weights, values, number_of_items - 1, knapsack_capacity);
-//     }
-
-//     //else select the maximum value of once including the current item and once not including it
-//     return std::max(knapsack_recursive(weights, values, number_of_items - 1, knapsack_capacity), values[number_of_items - 1] + knapsack_recursive(weights, values, number_of_items - 1, knapsack_capacity - weights[number_of_items - 1]));
-// }
-
-// int knapsack_dynamic(int weights[], int values[], int number_of_items, int knapsack_capacity)
-// {
-//     int i, j;
-//     int knapsack[number_of_items + 1][knapsack_capacity + 1];
-//     for (i = 0; i <= number_of_items; i++)
-//     {
-//         knapsack[i][0] = 0;
-//     }
-//     for (j = 0; j <= knapsack_capacity; j++)
-//     {
-//         knapsack[0][j] = 0;
-//     }
-
-//     for (i = 1; i <= number_of_items; i++)
-//     {
-//         for (j = 1; j <= knapsack_capacity; j++)
-//         {
-//             if (weights[i - 1] <= j)
-//             {
-//                 knapsack[i][j] = std::max(knapsack[i - 1][j], values[i - 1] + knapsack[i - 1][j - weights[i - 1]]);
-//             }
-//             else
-//             {
-//                 knapsack[i][j] = knapsack[i - 1][j];
-//             }
-//         }
-//     }
-
-//     return knapsack[number_of_items][knapsack_capacity];
-// }
-
-// int main(int argc, char const *argv[])
-// {
-//     int weights[NUMBER_OF_ITEMS] = {2, 1, 3, 2};    // item one is 2kg, item two is 1kg, item three is 3kg, item four is 2kg
-//     int values[NUMBER_OF_ITEMS] = {12, 10, 20, 15}; // item one is 12$, item two is 10$, item three is 20$, item four is 15$
-//     std::cout << knapsack_recursive(weights, values, NUMBER_OF_ITEMS, KNAPSACK_CAPACITY) << "$\n";
-//     std::cout << knapsack_dynamic(weights, values, NUMBER_OF_ITEMS, KNAPSACK_CAPACITY) << "$\n";
-//     return 0;
-// }
